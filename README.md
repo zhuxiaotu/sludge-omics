@@ -17,7 +17,9 @@ cd sludge-omics
 python3 -m http.server 5173
 ```
 
-访问：http://127.0.0.1:5173 （先进入登录页）
+在线访问（GitHub Pages）：https://zhuxiaotu.github.io/sludge-omics/
+
+本地：`python3 -m http.server 5173` 后打开 http://127.0.0.1:5173
 
 演示账号：`admin` / `admin123`（也可自行注册）
 
