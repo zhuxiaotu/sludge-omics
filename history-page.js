@@ -55,7 +55,7 @@
     wrap.innerHTML = list
       .map((run) => {
         const href = `${HistoryStore.pageForType(run.pipelineType)}?id=${encodeURIComponent(run.id)}`;
-        const steps = (run.steps || []).map((s) => s.name).join(" → ") || "未记录步骤";
+        const steps = (run.steps || []).map((s) => (s.tool ? `${s.name}/${s.tool}` : s.name)).join(" → ") || "未记录步骤";
         const files = (run.files || []).map((f) => f.name).join("、") || "无文件";
         return `
         <article class="history-card" data-id="${escapeHtml(run.id)}">
@@ -66,7 +66,7 @@
           <h3>${escapeHtml(run.project || "未命名项目")}</h3>
           <p class="history-meta">${escapeHtml(run.title || "")}${run.sample ? ` · ${escapeHtml(run.sample)}` : ""}${run.platform ? ` · ${escapeHtml(run.platform)}` : ""}</p>
           ${run.note ? `<p class="history-note">${escapeHtml(run.note)}</p>` : ""}
-          <p class="history-steps"><strong>流水线</strong> ${escapeHtml(steps)}</p>
+          <p class="history-steps"><strong>流程</strong> ${escapeHtml(steps)}</p>
           <p class="history-files"><strong>文件</strong> ${escapeHtml(files)}</p>
           <div class="history-card-actions">
             <a class="btn btn-primary btn-sm" href="${href}">打开查看</a>

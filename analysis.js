@@ -7,10 +7,9 @@
 
   const state = {
     files: [],
+    /** @type {{id:string,name:string,tools:string[],tool:string|null,uid:string}[]} */
     pipeline: [],
-    charts: { taxonomy: null, diversity: null, extra: null },
-    dragPaletteId: null,
-    dragStepIndex: null,
+    dragTool: null, // { moduleId, toolName }
     activeRunId: null,
     resultData: null,
   };
@@ -64,8 +63,8 @@
     el.innerHTML = config.catalog
       .map(
         (g) => `
-      <div class="catalog-group">
-        <h4>${escapeHtml(g.group)}</h4>
+      <div class="catalog-group panel">
+        <div class="panel-heading">${escapeHtml(g.group)}</div>
         <ul>${g.items.map((t) => `<li>${escapeHtml(t)}</li>`).join("")}</ul>
       </div>`
       )
@@ -101,81 +100,158 @@
     toast(added ? `已添加 ${added} 个文件` : "未识别到新的数据文件");
   }
 
+  /** Tool palette: all small tools grouped by process module */
   function renderPalette() {
     const palette = $("#palette");
     palette.innerHTML = config.modules
-      .map(
-        (m) => `
-      <div class="module-chip" draggable="true" data-id="${m.id}">
-        <span class="chip-dot" style="background:${m.color}"></span>
-        <div class="chip-body">
-          <strong>${m.name}</strong>
-          <span>${m.desc}</span>
-        </div>
-      </div>`
-      )
+      .map((m) => {
+        const tools = (m.tools || [])
+          .map(
+            (t) => `
+          <div class="tool-chip" draggable="true" data-module="${m.id}" data-tool="${escapeHtml(t)}">
+            ${escapeHtml(t)}
+          </div>`
+          )
+          .join("");
+        return `
+        <div class="tool-group">
+          <div class="tool-group-title">${escapeHtml(m.name)}</div>
+          <div class="tool-group-list">${tools}</div>
+        </div>`;
+      })
       .join("");
 
-    palette.querySelectorAll(".module-chip").forEach((chip) => {
+    palette.querySelectorAll(".tool-chip").forEach((chip) => {
       chip.addEventListener("dragstart", (e) => {
-        state.dragPaletteId = chip.dataset.id;
-        state.dragStepIndex = null;
+        state.dragTool = { moduleId: chip.dataset.module, toolName: chip.dataset.tool };
         chip.classList.add("dragging");
-        e.dataTransfer.setData("text/plain", `palette:${chip.dataset.id}`);
+        e.dataTransfer.setData("text/plain", `tool:${chip.dataset.module}|${chip.dataset.tool}`);
         e.dataTransfer.effectAllowed = "copy";
       });
       chip.addEventListener("dragend", () => chip.classList.remove("dragging"));
-      chip.addEventListener("dblclick", () => addModule(chip.dataset.id));
+      chip.addEventListener("dblclick", () => assignTool(chip.dataset.module, chip.dataset.tool));
     });
-  }
-
-  function addModule(id, index = null) {
-    const mod = findModule(id);
-    if (!mod) return;
-    const item = { ...mod, uid: `${id}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}` };
-    if (index == null || index < 0 || index > state.pipeline.length) state.pipeline.push(item);
-    else state.pipeline.splice(index, 0, item);
-    renderPipeline();
   }
 
   function resetPipeline() {
     state.pipeline = config.defaultIds.map((id, i) => {
       const m = findModule(id);
-      return { ...m, uid: `${id}-default-${i}` };
+      const tool = (config.defaultTools && config.defaultTools[id]) || (m.tools && m.tools[0]) || null;
+      return {
+        id: m.id,
+        name: m.name,
+        tools: m.tools || [],
+        tool,
+        uid: `${id}-default-${i}`,
+      };
     });
     renderPipeline();
+  }
+
+  function addStep(moduleId, toolName) {
+    const m = findModule(moduleId);
+    if (!m) return false;
+    if (toolName && !m.tools.includes(toolName)) return false;
+    state.pipeline.push({
+      id: m.id,
+      name: m.name,
+      tools: m.tools,
+      tool: toolName || m.tools[0] || null,
+      uid: `${m.id}-${Date.now()}`,
+    });
+    renderPipeline();
+    toast(`已追加步骤「${m.name}」· ${toolName || ""}`);
+    return true;
+  }
+
+  function assignTool(moduleId, toolName) {
+    const step = state.pipeline.find((s) => s.id === moduleId);
+    if (!step) {
+      addStep(moduleId, toolName);
+      return;
+    }
+    if (!step.tools.includes(toolName)) {
+      // same module already present but tool mismatch shouldn't happen; append another instance
+      addStep(moduleId, toolName);
+      return;
+    }
+    step.tool = toolName;
+    renderPipeline();
+    toast(`「${step.name}」已选用 ${toolName}`);
+  }
+
+  function applyDropToStep(stepIndex) {
+    if (!state.dragTool) return;
+    const { moduleId, toolName } = state.dragTool;
+    state.dragTool = null;
+    const step = state.pipeline[stepIndex];
+    if (!step) {
+      addStep(moduleId, toolName);
+      return;
+    }
+    if (step.id === moduleId) {
+      step.tool = toolName;
+      renderPipeline();
+      toast(`「${step.name}」已选用 ${toolName}`);
+      return;
+    }
+    // drop onto a different step → append as new step
+    addStep(moduleId, toolName);
+  }
+
+  function bindAppendDrop(el) {
+    if (!el) return;
+    el.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      el.classList.add("drop-target");
+    });
+    el.addEventListener("dragleave", () => el.classList.remove("drop-target"));
+    el.addEventListener("drop", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      el.classList.remove("drop-target");
+      if (!state.dragTool) return;
+      const { moduleId, toolName } = state.dragTool;
+      state.dragTool = null;
+      addStep(moduleId, toolName);
+    });
   }
 
   function renderPipeline() {
     const steps = $("#pipeline-steps");
     const empty = $("#canvas-empty");
-    steps.innerHTML = state.pipeline
-      .map(
-        (step, i) => `
-      <li class="pipeline-step" draggable="true" data-index="${i}" style="border-top: 3px solid ${step.color}">
-        <button class="step-remove" type="button" data-index="${i}" aria-label="移除">×</button>
-        <span class="step-index">${String(i + 1).padStart(2, "0")}</span>
-        <strong class="step-name">${step.name}</strong>
-        <span class="step-desc">${step.desc}</span>
+    const canvas = $("#pipeline-canvas");
+    if (!state.pipeline.length) {
+      steps.innerHTML = "";
+      empty.style.display = "block";
+      empty.textContent = "将小工具拖到此处追加步骤，或点击「重置推荐」";
+    } else {
+      empty.style.display = "none";
+      steps.innerHTML =
+        state.pipeline
+          .map(
+            (step, i) => `
+      <li class="pipeline-step" data-index="${i}" data-module="${step.id}">
+        <div class="step-head">
+          <span class="step-index">${i + 1}</span>
+          <strong class="step-name">${escapeHtml(step.name)}</strong>
+          <button class="step-remove" type="button" data-index="${i}" aria-label="移除步骤">×</button>
+        </div>
+        <div class="step-slot ${step.tool ? "filled" : ""}" data-index="${i}">
+          ${step.tool ? `<span class="picked-tool">${escapeHtml(step.tool)}</span>` : "<span class=\"slot-hint\">将小工具拖到此处</span>"}
+        </div>
+        <div class="step-arrow" aria-hidden="true">${i < state.pipeline.length - 1 ? "↓" : ""}</div>
       </li>`
-      )
-      .join("");
-    empty.style.display = state.pipeline.length ? "none" : "grid";
+          )
+          .join("") +
+        `<li class="pipeline-append" id="pipeline-append">拖到此处追加新步骤</li>`;
+    }
 
     steps.querySelectorAll(".pipeline-step").forEach((el) => {
-      el.addEventListener("dragstart", (e) => {
-        state.dragStepIndex = Number(el.dataset.index);
-        state.dragPaletteId = null;
-        el.classList.add("dragging");
-        e.dataTransfer.setData("text/plain", `step:${el.dataset.index}`);
-        e.dataTransfer.effectAllowed = "move";
-      });
-      el.addEventListener("dragend", () => {
-        el.classList.remove("dragging");
-        steps.querySelectorAll(".drop-target").forEach((n) => n.classList.remove("drop-target"));
-      });
       el.addEventListener("dragover", (e) => {
         e.preventDefault();
+        e.stopPropagation();
         el.classList.add("drop-target");
       });
       el.addEventListener("dragleave", () => el.classList.remove("drop-target"));
@@ -183,45 +259,36 @@
         e.preventDefault();
         e.stopPropagation();
         el.classList.remove("drop-target");
-        handleDropOnStep(Number(el.dataset.index));
+        const idx = Number(el.dataset.index);
+        applyDropToStep(idx);
       });
     });
-  }
 
-  function handleDropOnStep(targetIndex) {
-    if (state.dragPaletteId) {
-      addModule(state.dragPaletteId, targetIndex);
-      state.dragPaletteId = null;
-      return;
-    }
-    if (state.dragStepIndex == null || state.dragStepIndex === targetIndex) return;
-    const [moved] = state.pipeline.splice(state.dragStepIndex, 1);
-    const insertAt = state.dragStepIndex < targetIndex ? targetIndex - 1 : targetIndex;
-    state.pipeline.splice(insertAt, 0, moved);
-    state.dragStepIndex = null;
-    renderPipeline();
-  }
+    bindAppendDrop($("#pipeline-append"));
+    bindAppendDrop(empty);
 
-  function destroyCharts() {
-    Object.keys(state.charts).forEach((k) => {
-      if (state.charts[k]) {
-        state.charts[k].destroy();
-        state.charts[k] = null;
-      }
-    });
-  }
-
-  function chartDefaults() {
-    Chart.defaults.color = "#3d5266";
-    Chart.defaults.borderColor = "rgba(58, 126, 184, 0.12)";
-    Chart.defaults.font.family = "'Source Sans 3', sans-serif";
+    canvas.ondragover = (e) => {
+      e.preventDefault();
+      canvas.classList.add("dragover");
+    };
+    canvas.ondragleave = (e) => {
+      if (!canvas.contains(e.relatedTarget)) canvas.classList.remove("dragover");
+    };
+    canvas.ondrop = (e) => {
+      e.preventDefault();
+      canvas.classList.remove("dragover");
+      if (!state.dragTool) return;
+      const { moduleId, toolName } = state.dragTool;
+      state.dragTool = null;
+      addStep(moduleId, toolName);
+    };
   }
 
   function persistCurrentRun() {
     if (!window.HistoryStore) return null;
     const noteEl = $("#meta-note");
     const saved = HistoryStore.saveRun({
-      id: state.activeRunId || undefined,
+      id: state.activeRunId || null,
       pipelineType: page,
       title: config.title,
       project: $("#meta-project").value.trim() || "未命名项目",
@@ -229,7 +296,12 @@
       platform: ($("#meta-platform") && $("#meta-platform").value) || "",
       note: (noteEl && noteEl.value.trim()) || "",
       files: state.files.map((f) => ({ name: f.name, size: f.size })),
-      steps: state.pipeline.map((s) => ({ id: s.id, name: s.name, desc: s.desc, color: s.color })),
+      steps: state.pipeline.map((s) => ({
+        id: s.id,
+        name: s.name,
+        tool: s.tool,
+        tools: s.tools,
+      })),
       results: state.resultData || config.results,
     });
     state.activeRunId = saved.id;
@@ -244,94 +316,60 @@
     badge.innerHTML = `已保存 · ${HistoryStore.formatTime(saved.createdAt)} · <a href="history.html">查看历史</a>`;
   }
 
+  function toCsv(headers, rows) {
+    const esc = (v) => {
+      const s = String(v ?? "");
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    return [headers.map(esc).join(","), ...rows.map((r) => r.map(esc).join(","))].join("\n");
+  }
+
+  function downloadCsv(filename, headers, rows) {
+    const blob = new Blob(["\uFEFF" + toCsv(headers, rows)], { type: "text/csv;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
   function renderResults(customData) {
     const data = customData || config.results;
     state.resultData = data;
     const results = $("#results");
     results.hidden = false;
 
-    $("#results-subtitle").textContent = `「${$("#meta-project").value}」· ${config.title} · ${state.pipeline.length} 个分析步骤`;
+    const toolsLine = state.pipeline
+      .map((s) => `${s.name}:${s.tool || "未选"}`)
+      .join(" → ");
+    $("#results-subtitle").textContent = `「${$("#meta-project").value}」· ${config.title} · ${toolsLine}`;
 
-    $("#kpi-grid").innerHTML = data.kpis
-      .map(
-        (k, i) => `
-      <div class="kpi" style="animation-delay:${i * 0.05}s">
-        <span class="label">${k.label}</span>
-        <span class="value">${k.value}</span>
-      </div>`
-      )
+    const wrap = $("#result-tables");
+    const tables = data.tables || [];
+    wrap.innerHTML = tables
+      .map((t, ti) => `
+      <div class="result-table-block panel">
+        <div class="panel-heading clearfix">
+          <span>${escapeHtml(t.title)}</span>
+          <button class="btn btn-xs btn-default csv-btn" type="button" data-ti="${ti}">下载 CSV</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr>${t.headers.map((h) => `<th>${escapeHtml(h)}</th>`).join("")}</tr></thead>
+            <tbody>
+              ${t.rows.map((r) => `<tr>${r.map((c) => `<td>${escapeHtml(c)}</td>`).join("")}</tr>`).join("")}
+            </tbody>
+          </table>
+        </div>
+      </div>`)
       .join("");
 
-    $("#chart-tax-title").textContent = data.titles.tax;
-    $("#chart-div-title").textContent = data.titles.div;
-    $("#chart-extra-title").textContent = data.titles.extra;
-
-    $("#hits-table tbody").innerHTML = data.hits
-      .map(
-        ([name, cat, abund]) => `
-      <tr><td>${name}</td><td>${cat}</td><td>${abund}</td></tr>`
-      )
-      .join("");
-
-    $("#insight-panel").innerHTML = `<h3>解读摘要</h3><p>${data.insight}</p>`;
-
-    destroyCharts();
-    chartDefaults();
-    const palette = ["#2a5f8f", "#3a7eb8", "#5a9bcf", "#7eb3d9", "#4a90c8", "#c48a4a", "#a8c5dc"];
-
-    state.charts.taxonomy = new Chart($("#chart-taxonomy"), {
-      type: "doughnut",
-      data: {
-        labels: data.taxonomy.labels,
-        datasets: [{ data: data.taxonomy.values, backgroundColor: palette, borderWidth: 2, borderColor: "#fff", hoverOffset: 6 }],
-      },
-      options: { plugins: { legend: { position: "right", labels: { boxWidth: 12, padding: 12 } } }, cutout: "58%" },
-    });
-
-    state.charts.diversity = new Chart($("#chart-diversity"), {
-      type: "bar",
-      data: {
-        labels: data.diversity.labels,
-        datasets: [
-          { label: page === "rna" ? "表达复杂度" : "Shannon", data: data.diversity.shannon, backgroundColor: "rgba(58,126,184,0.75)", borderRadius: 8, yAxisID: "y" },
-          { label: page === "rna" ? "检出基因数" : "丰富度", data: data.diversity.chao1, type: "line", borderColor: "#c48a4a", backgroundColor: "rgba(196,138,74,0.15)", tension: 0.35, yAxisID: "y1" },
-        ],
-      },
-      options: {
-        scales: {
-          y: { beginAtZero: true, grid: { color: "rgba(58,126,184,0.08)" } },
-          y1: { position: "right", beginAtZero: true, grid: { drawOnChartArea: false } },
-          x: { grid: { display: false } },
-        },
-        plugins: { legend: { labels: { boxWidth: 12 } } },
-      },
-    });
-
-    state.charts.extra = new Chart($("#chart-extra"), {
-      type: "radar",
-      data: {
-        labels: data.extra.labels,
-        datasets: [{
-          label: "相对贡献",
-          data: data.extra.values,
-          borderColor: "#3a7eb8",
-          backgroundColor: "rgba(58,126,184,0.18)",
-          pointBackgroundColor: "#2a5f8f",
-        }],
-      },
-      options: {
-        scales: {
-          r: {
-            angleLines: { color: "rgba(58,126,184,0.15)" },
-            grid: { color: "rgba(58,126,184,0.12)" },
-            pointLabels: { color: "#3d5266", font: { size: 11 } },
-            ticks: { display: false },
-            suggestedMin: 0,
-            suggestedMax: 40,
-          },
-        },
-        plugins: { legend: { display: false } },
-      },
+    wrap.querySelectorAll(".csv-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const t = tables[Number(btn.dataset.ti)];
+        const safe = (t.title || "result").replace(/[\\/:*?"<>|]/g, "_");
+        downloadCsv(`${safe}.csv`, t.headers, t.rows);
+      });
     });
 
     results.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -343,7 +381,12 @@
 
   async function runAnalysis() {
     if (!state.pipeline.length) {
-      toast("请先编排分析流水线");
+      toast("请先设置分析流程");
+      return;
+    }
+    const missing = state.pipeline.filter((s) => !s.tool);
+    if (missing.length) {
+      toast(`请为步骤选择工具：${missing.map((s) => s.name).join("、")}`);
       return;
     }
     if (!state.files.length) toast("建议先上传或载入演示数据");
@@ -356,12 +399,12 @@
 
     for (let i = 0; i < state.pipeline.length; i++) {
       fill.style.width = `${Math.round(((i + 1) / state.pipeline.length) * 100)}%`;
-      text.textContent = `正在执行：${state.pipeline[i].name}（${i + 1}/${state.pipeline.length}）`;
-      await wait(400 + Math.random() * 350);
+      text.textContent = `正在执行：${state.pipeline[i].name} / ${state.pipeline[i].tool}（${i + 1}/${state.pipeline.length}）`;
+      await wait(380 + Math.random() * 320);
     }
-    text.textContent = "分析完成，正在生成可视化…";
+    text.textContent = "分析完成";
     fill.style.width = "100%";
-    await wait(300);
+    await wait(250);
     state.activeRunId = null;
     renderResults(config.results);
     const saved = persistCurrentRun();
@@ -382,10 +425,16 @@
 
     state.activeRunId = run.id;
     state.files = (run.files || []).map((f) => ({ ...f }));
-    state.pipeline = (run.steps || []).map((s, i) => ({
-      ...s,
-      uid: `${s.id || "step"}-loaded-${i}`,
-    }));
+    state.pipeline = (run.steps || []).map((s, i) => {
+      const m = findModule(s.id) || { tools: s.tools || [] };
+      return {
+        id: s.id,
+        name: s.name || m.name,
+        tools: s.tools || m.tools || [],
+        tool: s.tool || null,
+        uid: `${s.id || "step"}-loaded-${i}`,
+      };
+    });
     if ($("#meta-project")) $("#meta-project").value = run.project || "";
     if ($("#meta-sample")) $("#meta-sample").value = run.sample || "";
     if ($("#meta-platform") && run.platform) $("#meta-platform").value = run.platform;
@@ -425,17 +474,6 @@
   }
 
   function bindPipelineCanvas() {
-    const canvas = $("#pipeline-canvas");
-    canvas.addEventListener("dragover", (e) => { e.preventDefault(); canvas.classList.add("dragover"); });
-    canvas.addEventListener("dragleave", (e) => { if (!canvas.contains(e.relatedTarget)) canvas.classList.remove("dragover"); });
-    canvas.addEventListener("drop", (e) => {
-      e.preventDefault();
-      canvas.classList.remove("dragover");
-      if (state.dragPaletteId) {
-        addModule(state.dragPaletteId);
-        state.dragPaletteId = null;
-      }
-    });
     $("#pipeline-steps").addEventListener("click", (e) => {
       const btn = e.target.closest(".step-remove");
       if (!btn) return;
@@ -454,7 +492,7 @@
 
     $("#btn-reset-pipeline").addEventListener("click", () => {
       resetPipeline();
-      toast("已加载推荐流水线");
+      toast("已恢复推荐流程");
     });
     $("#btn-run").addEventListener("click", runAnalysis);
     $("#btn-demo").addEventListener("click", () => {

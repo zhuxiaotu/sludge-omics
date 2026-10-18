@@ -24,13 +24,14 @@
 
   function saveRun(record) {
     const list = readAll();
+    const id = record.id || uid();
     const item = {
-      id: record.id || uid(),
+      ...record,
+      id,
       createdAt: record.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      ...record,
     };
-    const idx = list.findIndex((x) => x.id === item.id);
+    const idx = list.findIndex((x) => x.id === id);
     if (idx >= 0) list.splice(idx, 1);
     list.unshift(item);
     writeAll(list);
@@ -59,7 +60,7 @@
   function typeLabel(type) {
     if (type === "rna") return "转录组";
     if (type === "meta") return "宏基因组";
-    if (type === "16s") return "16S";
+    if (type === "16s") return "16S扩增子";
     return type || "未知";
   }
 

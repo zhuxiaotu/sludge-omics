@@ -4,19 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>宏基因组测序数据分析 · 基因组数据分析系统</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <script src="auth.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 </head>
 <body class="page-analysis" data-pipeline="meta">
-  <div class="bg-layer" aria-hidden="true">
-    <div class="bg-ripple"></div>
-    <div class="bg-genes"></div>
-  </div>
-
   <header class="site-header">
     <a class="logo" href="index.html">
       <span class="logo-mark" aria-hidden="true"></span>
@@ -24,17 +15,15 @@
     </a>
     <nav class="nav">
       <a href="index.html">首页</a>
+      <a href="16s.html">16S扩增子</a>
+      <a href="meta.html" class="active">宏基因组</a>
       <a href="rna.html">转录组</a>
-      <a href="meta.html">宏基因组</a>
-      <a href="16s.html">16S</a>
       <a href="history.html">历史记录</a>
-      <a href="#pipeline">流水线</a>
-      <a href="#results">结果</a>
     </nav>
     <div class="header-actions">
-      <button class="btn btn-ghost" id="btn-demo" type="button">载入演示数据</button>
-      <button class="btn btn-ghost" id="btn-save" type="button">保存当前</button>
-      <button class="btn btn-ghost btn-sm" id="btn-logout" type="button">退出</button>
+      <button class="btn btn-default btn-sm" id="btn-demo" type="button">载入演示数据</button>
+      <button class="btn btn-default btn-sm" id="btn-save" type="button">保存当前</button>
+      <button class="btn btn-default btn-sm" id="btn-logout" type="button">退出</button>
     </div>
   </header>
 
@@ -43,30 +32,13 @@
       <div class="hero-copy">
         <p class="eyebrow">Metagenomics</p>
         <p class="brand-signal brand-signal-sm">宏基因组测序数据分析</p>
-        <h1>从质控组装到基因预测与物种注释</h1>
-        <p class="hero-lead">参考宏基因组测序分析流程软件：流程集成、质控去宿主、组装、基因预测与物种注释。</p>
-        <div class="hero-actions">
-          <a class="btn btn-primary" href="#workspace">开始分析</a>
-          <a class="btn btn-ghost" href="#catalog">浏览流程软件</a>
-        </div>
-      </div>
-      <div class="hero-visual" aria-hidden="true">
-        <svg class="gene-hero-svg" viewBox="0 0 420 420" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect x="40" y="40" width="340" height="340" rx="28" fill="#f5f9fc" stroke="#c5d9ea"/>
-  <circle cx="150" cy="180" r="70" stroke="#3a7eb8" stroke-width="3" fill="rgba(58,126,184,0.08)"/>
-  <circle cx="240" cy="160" r="55" stroke="#5a9bcf" stroke-width="3" fill="rgba(90,155,207,0.1)"/>
-  <circle cx="220" cy="250" r="60" stroke="#2a5f8f" stroke-width="3" fill="rgba(42,95,143,0.08)"/>
-  <path d="M90 320 H330" stroke="#c5d9ea" stroke-width="2"/>
-  <path d="M100 300 L140 250 L180 270 L220 200 L260 240 L300 180 L330 210" stroke="#3a7eb8" stroke-width="3" fill="none" stroke-linecap="round"/>
-  <text x="70" y="90" fill="#2a5f8f" font-size="18" font-family="serif">Genes &amp; Contigs</text>
-</svg>
+        <h1>质控 · 去宿主 · 组装 · 物种注释</h1>
       </div>
     </section>
 
     <section class="catalog-section" id="catalog">
       <div class="section-head">
         <h2>流程软件一览</h2>
-        <p>依据常用测序数据分析流程整理的软件清单，可在下方流水线中选用对应步骤。</p>
       </div>
       <div class="software-catalog" id="software-catalog"></div>
     </section>
@@ -74,7 +46,7 @@
     <section class="workspace" id="workspace">
       <div class="section-head">
         <h2>分析台</h2>
-        <p>拖入测序数据文件，配置项目信息后编排流水线。</p>
+        <p>上传测序数据文件，填写项目信息。</p>
       </div>
       <div class="workspace-grid">
         <div class="dropzone" id="dropzone" tabindex="0">
@@ -125,25 +97,25 @@
 
     <section class="pipeline-section" id="pipeline">
       <div class="section-head">
-        <h2>可拖拽分析流水线</h2>
-        <p>从左侧模块库拖入步骤，调整顺序后运行。双击模块也可添加。</p>
+        <h2>分析流程</h2>
+        <p>从左侧拖入小工具到右侧：可替换已有步骤的工具。</p>
       </div>
       <div class="pipeline-layout">
         <div class="module-palette">
-          <h3>模块库</h3>
-          <p class="palette-hint">拖到右侧画布</p>
+          <h3>小工具库</h3>
+          <p class="palette-hint">拖到右侧流程，或双击追加</p>
           <div class="palette-list" id="palette"></div>
         </div>
         <div class="pipeline-canvas-wrap">
           <div class="canvas-toolbar">
             <span id="pipeline-mode-label">当前分析</span>
             <div class="toolbar-actions">
-              <button class="btn btn-ghost btn-sm" id="btn-reset-pipeline" type="button">重置推荐</button>
+              <button class="btn btn-default btn-sm" id="btn-reset-pipeline" type="button">重置推荐</button>
               <button class="btn btn-primary btn-sm" id="btn-run" type="button">运行分析</button>
             </div>
           </div>
           <div class="pipeline-canvas" id="pipeline-canvas">
-            <p class="canvas-empty" id="canvas-empty">将模块拖到这里，或点击「重置推荐」加载默认流程</p>
+            <p class="canvas-empty" id="canvas-empty">将小工具拖到此处追加步骤，或点击「重置推荐」</p>
             <ol class="pipeline-steps" id="pipeline-steps"></ol>
           </div>
           <div class="run-progress" id="run-progress" hidden>
@@ -157,36 +129,10 @@
     <section class="results" id="results" hidden>
       <div class="section-head">
         <h2>分析结果</h2>
-        <p id="results-subtitle">演示结果基于典型测序分析特征生成。</p>
+        <p id="results-subtitle">数据表格输出</p>
         <p class="save-badge" id="save-badge" hidden></p>
       </div>
-      <div class="kpi-grid" id="kpi-grid"></div>
-      <div class="charts-grid">
-        <article class="chart-card">
-          <h3 id="chart-tax-title">组成概况</h3>
-          <canvas id="chart-taxonomy"></canvas>
-        </article>
-        <article class="chart-card">
-          <h3 id="chart-div-title">样本指标</h3>
-          <canvas id="chart-diversity"></canvas>
-        </article>
-        <article class="chart-card">
-          <h3 id="chart-extra-title">功能概况</h3>
-          <canvas id="chart-extra"></canvas>
-        </article>
-        <article class="chart-card table-card">
-          <h3>关键结果</h3>
-          <div class="table-wrap">
-            <table id="hits-table">
-              <thead>
-                <tr><th>名称</th><th>类别</th><th>指标</th></tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </article>
-      </div>
-      <div class="insight-panel" id="insight-panel"></div>
+      <div id="result-tables"></div>
     </section>
   </main>
 

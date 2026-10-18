@@ -4,18 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>基因组数据分析系统</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <script src="auth.js"></script>
 </head>
 <body class="page-home">
-  <div class="bg-layer" aria-hidden="true">
-    <div class="bg-ripple"></div>
-    <div class="bg-genes"></div>
-  </div>
-
   <div class="home-screen">
     <header class="site-header home-header">
       <a class="logo" href="index.html">
@@ -25,7 +17,7 @@
       <nav class="nav">
         <a href="history.html">历史记录</a>
         <span class="user-chip" id="user-chip"></span>
-        <button class="btn btn-ghost btn-sm" id="btn-logout" type="button">退出</button>
+        <button class="btn btn-default btn-sm" id="btn-logout" type="button">退出</button>
       </nav>
     </header>
 
@@ -36,55 +28,57 @@
       </div>
 
       <div class="module-cards home-cards">
-        <a class="module-card" href="rna.html">
+        <a class="module-card" href="16s.html">
           <div class="card-visual" aria-hidden="true">
             <svg viewBox="0 0 200 100" fill="none">
-              <path d="M20 75 C40 30, 60 85, 80 45 C100 15, 120 70, 140 35 C160 12, 175 58, 185 40" stroke="#3a7eb8" stroke-width="3" stroke-linecap="round" fill="none"/>
-              <rect x="24" y="82" width="12" height="10" rx="2" fill="#a8c5dc"/>
-              <rect x="44" y="72" width="12" height="20" rx="2" fill="#7eb3d9"/>
-              <rect x="64" y="62" width="12" height="30" rx="2" fill="#5a9bcf"/>
-              <rect x="84" y="55" width="12" height="37" rx="2" fill="#3a7eb8"/>
-              <rect x="104" y="66" width="12" height="26" rx="2" fill="#5a9bcf"/>
-              <rect x="124" y="48" width="12" height="44" rx="2" fill="#2a5f8f"/>
+              <path d="M100 12 L100 90" stroke="#ddd" stroke-width="2"/>
+              <path d="M100 22 L142 36 L142 58 L100 72 L58 58 L58 36 Z" stroke="#337ab7" stroke-width="2" fill="#eef5fa"/>
+              <path d="M100 34 L126 44 L126 58 L100 68 L74 58 L74 44 Z" stroke="#5bc0de" stroke-width="1.5" fill="#fff"/>
+              <circle cx="100" cy="50" r="4" fill="#286090"/>
             </svg>
           </div>
-          <span class="card-tag">RNA-seq</span>
-          <h3>转录组测序数据分析</h3>
-          <p>质控 · 比对 · 定量 · 差异表达</p>
-          <span class="card-cta">进入分析 →</span>
+          <span class="card-tag">16S扩增子</span>
+          <h3>16S扩增子测序数据分析</h3>
+          <p>OTU · 物种注释 · 多样性</p>
+          <span class="card-cta">进入分析 »</span>
         </a>
 
         <a class="module-card" href="meta.html">
           <div class="card-visual" aria-hidden="true">
             <svg viewBox="0 0 200 100" fill="none">
-              <circle cx="70" cy="48" r="24" stroke="#3a7eb8" stroke-width="2.5" fill="rgba(58,126,184,0.08)"/>
-              <circle cx="118" cy="40" r="18" stroke="#5a9bcf" stroke-width="2.5" fill="rgba(90,155,207,0.1)"/>
-              <circle cx="108" cy="68" r="16" stroke="#2a5f8f" stroke-width="2.5" fill="rgba(42,95,143,0.08)"/>
-              <path d="M48 82 L72 60 L96 70 L118 42 L142 58 L165 46" stroke="#3a7eb8" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+              <circle cx="70" cy="48" r="24" stroke="#337ab7" stroke-width="2" fill="#eef5fa"/>
+              <circle cx="118" cy="40" r="18" stroke="#5bc0de" stroke-width="2" fill="#eef5fa"/>
+              <circle cx="108" cy="68" r="16" stroke="#286090" stroke-width="2" fill="#eef5fa"/>
+              <path d="M48 82 L72 60 L96 70 L118 42 L142 58 L165 46" stroke="#337ab7" stroke-width="2" stroke-linecap="round" fill="none"/>
             </svg>
           </div>
           <span class="card-tag">Metagenomics</span>
           <h3>宏基因组测序数据分析</h3>
           <p>质控 · 组装 · 基因预测 · 注释</p>
-          <span class="card-cta">进入分析 →</span>
+          <span class="card-cta">进入分析 »</span>
         </a>
 
-        <a class="module-card" href="16s.html">
+        <a class="module-card" href="rna.html">
           <div class="card-visual" aria-hidden="true">
             <svg viewBox="0 0 200 100" fill="none">
-              <path d="M100 12 L100 90" stroke="#c5d9ea" stroke-width="2"/>
-              <path d="M100 22 L142 36 L142 58 L100 72 L58 58 L58 36 Z" stroke="#3a7eb8" stroke-width="2.5" fill="rgba(58,126,184,0.06)"/>
-              <path d="M100 34 L126 44 L126 58 L100 68 L74 58 L74 44 Z" stroke="#5a9bcf" stroke-width="2" fill="rgba(90,155,207,0.1)"/>
-              <circle cx="100" cy="50" r="5" fill="#2a5f8f"/>
+              <path d="M20 75 C40 30, 60 85, 80 45 C100 15, 120 70, 140 35 C160 12, 175 58, 185 40" stroke="#337ab7" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+              <rect x="24" y="82" width="12" height="10" fill="#a8c5dc"/>
+              <rect x="44" y="72" width="12" height="20" fill="#7eb3d9"/>
+              <rect x="64" y="62" width="12" height="30" fill="#5a9bcf"/>
+              <rect x="84" y="55" width="12" height="37" fill="#337ab7"/>
+              <rect x="104" y="66" width="12" height="26" fill="#5a9bcf"/>
+              <rect x="124" y="48" width="12" height="44" fill="#286090"/>
             </svg>
           </div>
-          <span class="card-tag">16S rRNA</span>
-          <h3>16S 测序数据分析</h3>
-          <p>OTU · 物种注释 · 多样性</p>
-          <span class="card-cta">进入分析 →</span>
+          <span class="card-tag">RNA-seq</span>
+          <h3>转录组测序数据分析</h3>
+          <p>质控 · 比对 · 定量 · 差异表达</p>
+          <span class="card-cta">进入分析 »</span>
         </a>
       </div>
     </main>
+
+    <p class="home-foot">基因组数据分析系统 · v1.0 · 2018</p>
   </div>
 
   <script>
