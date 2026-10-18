@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>基因组数据分析系统</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="bg-layer" aria-hidden="true">
+    <div class="bg-ripple"></div>
+    <div class="bg-microbes"></div>
+  </div>
+
+  <header class="site-header">
+    <a class="logo" href="#top">
+      <span class="logo-mark" aria-hidden="true"></span>
+      <span class="logo-text">基因组数据分析系统</span>
+    </a>
+    <nav class="nav">
+      <a href="#workspace">分析台</a>
+      <a href="#pipeline">流水线</a>
+      <a href="#results">结果</a>
+    </nav>
+    <button class="btn btn-ghost" id="btn-demo" type="button">载入演示数据</button>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="brand-signal">基因组数据分析系统</p>
+        <h1>污泥宏基因与 16S，拖拽即可解析</h1>
+        <p class="hero-lead">面向污水处理污泥的 16S 扩增子与宏基因组分析工作台——上传测序文件，编排质控到功能注释流水线，一览群落结构、抗性基因与功能通路。</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#workspace">开始分析</a>
+          <a class="btn btn-ghost" href="#pipeline">编排流水线</a>
+        </div>
+      </div>
+      <div class="hero-visual" aria-hidden="true">
+        <div class="tank">
+          <div class="sludge-layer"></div>
+          <div class="bubble b1"></div>
+          <div class="bubble b2"></div>
+          <div class="bubble b3"></div>
+          <div class="dna-strand"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="workspace" id="workspace">
+      <div class="section-head">
+        <h2>分析台</h2>
+        <p>选择分析类型，拖入 FASTQ / FASTA 文件，配置样本元数据。</p>
+      </div>
+
+      <div class="mode-switch" role="tablist" aria-label="分析类型">
+        <button class="mode-btn active" data-mode="16s" type="button" role="tab" aria-selected="true">
+          <span class="mode-title">16S 扩增子</span>
+          <span class="mode-desc">ASV / OTU · 分类组成 · 多样性</span>
+        </button>
+        <button class="mode-btn" data-mode="meta" type="button" role="tab" aria-selected="false">
+          <span class="mode-title">宏基因组</span>
+          <span class="mode-desc">组装 · 物种 · ARG · 功能</span>
+        </button>
+      </div>
+
+      <div class="workspace-grid">
+        <div class="dropzone" id="dropzone" tabindex="0">
+          <div class="dropzone-inner">
+            <div class="drop-icon" aria-hidden="true"></div>
+            <p class="drop-title">拖拽测序文件到此处</p>
+            <p class="drop-hint">支持 .fastq / .fq / .fasta / .fa / .gz · 也可点击选择</p>
+            <input type="file" id="file-input" multiple accept=".fastq,.fq,.fasta,.fa,.gz,.fastq.gz,.fq.gz" hidden />
+          </div>
+          <ul class="file-list" id="file-list"></ul>
+        </div>
+
+        <aside class="meta-panel">
+          <h3>样本元数据</h3>
+          <label>
+            项目名称
+            <input type="text" id="meta-project" value="污泥A2O工艺四季监测" />
+          </label>
+          <label>
+            工艺段
+            <select id="meta-process">
+              <option>进水</option>
+              <option selected>好氧池污泥</option>
+              <option>厌氧池污泥</option>
+              <option>沉淀池污泥</option>
+              <option>脱水污泥</option>
+            </select>
+          </label>
+          <label>
+            采样批次
+            <input type="text" id="meta-batch" value="2026-Q1" />
+          </label>
+          <label>
+            测序平台
+            <select id="meta-platform">
+              <option>Illumina NovaSeq</option>
+              <option selected>Illumina MiSeq</option>
+              <option>PacBio HiFi</option>
+              <option>ONT</option>
+            </select>
+          </label>
+          <div class="stat-row">
+            <div class="stat">
+              <span class="stat-val" id="stat-files">0</span>
+              <span class="stat-lab">文件</span>
+            </div>
+            <div class="stat">
+              <span class="stat-val" id="stat-reads">—</span>
+              <span class="stat-lab">预估 reads</span>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="pipeline-section" id="pipeline">
+      <div class="section-head">
+        <h2>可拖拽分析流水线</h2>
+        <p>从左侧模块库拖入步骤，调整顺序后运行。模块会按分析类型自动推荐。</p>
+      </div>
+
+      <div class="pipeline-layout">
+        <div class="module-palette">
+          <h3>模块库</h3>
+          <p class="palette-hint">拖到右侧画布</p>
+          <div class="palette-list" id="palette"></div>
+        </div>
+
+        <div class="pipeline-canvas-wrap">
+          <div class="canvas-toolbar">
+            <span id="pipeline-mode-label">当前：16S 扩增子</span>
+            <div class="toolbar-actions">
+              <button class="btn btn-ghost btn-sm" id="btn-reset-pipeline" type="button">重置推荐</button>
+              <button class="btn btn-primary btn-sm" id="btn-run" type="button">运行分析</button>
+            </div>
+          </div>
+          <div class="pipeline-canvas" id="pipeline-canvas">
+            <p class="canvas-empty" id="canvas-empty">将模块拖到这里，或点击「重置推荐」加载默认流程</p>
+            <ol class="pipeline-steps" id="pipeline-steps"></ol>
+          </div>
+          <div class="run-progress" id="run-progress" hidden>
+            <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+            <p id="progress-text">准备中…</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="results" id="results" hidden>
+      <div class="section-head">
+        <h2>分析结果</h2>
+        <p id="results-subtitle">演示结果基于典型污泥群落与功能特征生成。</p>
+      </div>
+
+      <div class="kpi-grid" id="kpi-grid"></div>
+
+      <div class="charts-grid">
+        <article class="chart-card">
+          <h3 id="chart-tax-title">门级相对丰度</h3>
+          <canvas id="chart-taxonomy"></canvas>
+        </article>
+        <article class="chart-card">
+          <h3 id="chart-div-title">Alpha 多样性</h3>
+          <canvas id="chart-diversity"></canvas>
+        </article>
+        <article class="chart-card">
+          <h3 id="chart-extra-title">功能 / ARG 概况</h3>
+          <canvas id="chart-extra"></canvas>
+        </article>
+        <article class="chart-card table-card">
+          <h3>关键物种 / 基因</h3>
+          <div class="table-wrap">
+            <table id="hits-table">
+              <thead>
+                <tr>
+                  <th>名称</th>
+                  <th>类别</th>
+                  <th>丰度 / 丰度指数</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </article>
+      </div>
+
+      <div class="insight-panel" id="insight-panel"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>基因组数据分析系统 · 污泥宏基因 / 16S 分析演示工作台 · 前端本地运行，数据不上传服务器</p>
+  </footer>
+
+  <div class="toast" id="toast" hidden></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
