@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>历史记录 · 基因组数据分析系统</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="auth.js"></script>
+</head>
+<body class="page-history">
+  <div class="bg-layer" aria-hidden="true">
+    <div class="bg-ripple"></div>
+    <div class="bg-genes"></div>
+  </div>
+
+  <header class="site-header">
+    <a class="logo" href="index.html">
+      <span class="logo-mark" aria-hidden="true"></span>
+      <span class="logo-text">基因组数据分析系统</span>
+    </a>
+    <nav class="nav">
+      <a href="index.html">首页</a>
+      <a href="rna.html">转录组</a>
+      <a href="meta.html">宏基因组</a>
+      <a href="16s.html">16S</a>
+      <a href="history.html" aria-current="page">历史记录</a>
+      <button class="btn btn-ghost btn-sm" id="btn-logout" type="button">退出</button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero hero-sub">
+      <div class="hero-copy">
+        <p class="eyebrow">History</p>
+        <p class="brand-signal brand-signal-sm">历史分析记录</p>
+        <h1>回看、打开或删除你做过的分析</h1>
+        <p class="hero-lead">记录保存在本机浏览器本地存储中，不上传服务器。换设备或清理浏览器数据后可能丢失，重要结果请自行备份。</p>
+      </div>
+    </section>
+
+    <section class="history-section">
+      <div class="history-toolbar">
+        <div class="history-filters" role="tablist" aria-label="类型筛选">
+          <button class="filter-btn active" type="button" data-filter="all">全部</button>
+          <button class="filter-btn" type="button" data-filter="rna">转录组</button>
+          <button class="filter-btn" type="button" data-filter="meta">宏基因组</button>
+          <button class="filter-btn" type="button" data-filter="16s">16S</button>
+        </div>
+        <div class="history-actions">
+          <input type="search" id="history-search" placeholder="搜索项目名 / 备注…" />
+          <button class="btn btn-ghost btn-sm" id="btn-clear-history" type="button">清空全部</button>
+        </div>
+      </div>
+
+      <p class="history-count" id="history-count"></p>
+      <div class="history-list" id="history-list"></div>
+      <p class="history-empty" id="history-empty" hidden>暂无历史记录。去任一分析模块运行一次分析后，会自动保存在这里。</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p><a href="index.html">返回首页</a> · 基因组数据分析系统 · 历史记录</p>
+  </footer>
+
+  <div class="toast" id="toast" hidden></div>
+  <script src="storage.js"></script>
+  <script>
+    document.getElementById("btn-logout")?.addEventListener("click", () => Auth.logout());
+  </script>
+  <script src="history-page.js"></script>
+</body>
+</html>

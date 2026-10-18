@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>登录 · 基因组数据分析系统</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="page-login">
+  <div class="bg-layer" aria-hidden="true">
+    <div class="bg-ripple"></div>
+    <div class="bg-genes"></div>
+  </div>
+
+  <main class="login-shell">
+    <section class="login-panel">
+      <div class="login-brand">
+        <span class="logo-mark" aria-hidden="true"></span>
+        <h1>基因组数据分析系统</h1>
+        <p>登录后进入转录组 · 宏基因组 · 16S 分析工作台</p>
+      </div>
+
+      <form class="login-form" id="login-form" autocomplete="on">
+        <label>
+          用户名
+          <input type="text" id="login-user" name="username" required placeholder="请输入用户名" autocomplete="username" />
+        </label>
+        <label>
+          密码
+          <input type="password" id="login-pass" name="password" required placeholder="请输入密码" autocomplete="current-password" />
+        </label>
+        <label class="remember-row">
+          <input type="checkbox" id="login-remember" />
+          <span>记住登录状态</span>
+        </label>
+        <p class="login-error" id="login-error" hidden></p>
+        <button class="btn btn-primary login-submit" type="submit">登录</button>
+      </form>
+
+      <details class="register-box">
+        <summary>没有账号？注册</summary>
+        <form class="login-form register-form" id="register-form">
+          <label>
+            用户名
+            <input type="text" id="reg-user" required placeholder="设置用户名" />
+          </label>
+          <label>
+            显示名称
+            <input type="text" id="reg-name" placeholder="可选" />
+          </label>
+          <label>
+            密码
+            <input type="password" id="reg-pass" required placeholder="至少 4 位" />
+          </label>
+          <p class="login-error" id="reg-error" hidden></p>
+          <button class="btn btn-ghost login-submit" type="submit">创建账号</button>
+        </form>
+      </details>
+
+      <p class="login-hint">演示账号：admin / admin123</p>
+    </section>
+
+    <aside class="login-visual" aria-hidden="true">
+      <svg class="gene-hero-svg" viewBox="0 0 360 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#5a9bcf"/>
+            <stop offset="100%" stop-color="#2a5f8f"/>
+          </linearGradient>
+        </defs>
+        <rect x="30" y="30" width="300" height="360" rx="24" fill="#f5f9fc" stroke="#c5d9ea"/>
+        <path class="helix-a" d="M110 70 C180 110, 180 150, 110 190 C40 230, 40 270, 110 310 C180 350, 180 380, 110 400" stroke="url(#lg)" stroke-width="4" stroke-linecap="round"/>
+        <path class="helix-b" d="M250 70 C180 110, 180 150, 250 190 C320 230, 320 270, 250 310 C180 350, 180 380, 250 400" stroke="#7eb3d9" stroke-width="4" stroke-linecap="round"/>
+        <g stroke="#3a7eb8" stroke-width="2" opacity="0.5">
+          <line x1="130" y1="100" x2="230" y2="100"/>
+          <line x1="110" y1="190" x2="250" y2="190"/>
+          <line x1="110" y1="310" x2="250" y2="310"/>
+          <line x1="130" y1="370" x2="230" y2="370"/>
+        </g>
+      </svg>
+    </aside>
+  </main>
+
+  <script src="auth.js"></script>
+  <script src="login-page.js"></script>
+</body>
+</html>
